@@ -40,19 +40,22 @@ public class LeerArchivo {
     public void enviarInformacion(String tabla, List<List<String>> datos, int numColumnas) {
         try (Connection conn = ConexionOracle.obtenerConexion();
              PreparedStatement stmt = conn.prepareStatement("INSERT INTO " + tabla + " VALUES (" + String.join(",", Collections.nCopies(numColumnas, "?")) + ")")) {
+            conn.setAutoCommit(false);
             for (List<String> fila : datos) {
                 String[] filaArray = fila.toArray(new String[numColumnas]);
                 for (int i = 0; i < numColumnas; i++) {
                     stmt.setString(i + 1, filaArray[i]);
                 }
-                stmt.executeUpdate();
+                stmt.addBatch();
             }
+            stmt.executeBatch();
+            conn.commit();
             System.out.println("La información ha sido enviada a la base de datos.");
         } catch (SQLException ex) {
             System.out.println("Error al enviar la información a la base de datos: " + ex.getMessage());
         }
     }
-
+    
     public List<List<String>> getDatos() {
         return datos;
     }
